@@ -16,7 +16,7 @@ export default defineConfig({
       env: {
         // parseEnv(config) requires this; the Function runtime does not inject it.
         NEON_FUNCTION_CHAT_BASE_URL:
-          "https://br-ancient-hat-aj04b6gz-chat.compute.c-3.us-east-2.aws.neon.tech",
+          "https://br-sweet-cake-bck9vcvy-chat.compute.c-16.us-east-1.aws.neon.tech",
       },
     },
   },
