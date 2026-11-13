@@ -4,7 +4,7 @@ import { defineConfig } from "@neon/config/v1";
 // secrets stay on the live deployment so local drizzle/parseEnv can load
 // without them.
 export default defineConfig({
-  auth: true,
+  auth: false,
   aiGateway: true,
   buckets: {
     uploads: {},
