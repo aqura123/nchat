@@ -1,0 +1,22 @@
+name: Neon Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  neon:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify Neon API
+        run: npx --yes neonctl@latest me
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
