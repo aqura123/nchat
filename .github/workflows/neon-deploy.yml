@@ -1,4 +1,4 @@
-name: Neon Deploy
+name: Neon Deploy Plan
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   neon:
-    name: Verify Neon Project
+    name: Preview Neon Changes
     runs-on: ubuntu-latest
 
     steps:
@@ -20,9 +20,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Verify Neon project access
+      - name: Preview Neon configuration
         run: |
-          npx --yes neonctl@latest projects get "$PROJECT_ID" --output json
+          npx --yes neon@latest config plan \
+            --project-id dawn-sun-28420940 \
+            --branch production
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
-          PROJECT_ID: dawn-sun-28420940
