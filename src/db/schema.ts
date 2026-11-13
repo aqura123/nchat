@@ -1,0 +1,22 @@
+import { pgTable, serial, text, timestamp, index } from 'drizzle-orm/pg-core';
+
+export const messages = pgTable(
+  'messages',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id').notNull(),
+    userName: text('user_name').notNull(),
+    body: text('body').notNull().default(''),
+    imageUrl: text('image_url'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [index('messages_created_at_idx').on(table.createdAt)],
+);
+
+// Per-user profile picture, keyed by the Neon Auth user id. Rendered next to that
+// user's messages (looked up client-side by user id).
+export const profiles = pgTable('profiles', {
+  userId: text('user_id').primaryKey(),
+  avatarUrl: text('avatar_url').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
