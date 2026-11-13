@@ -16,7 +16,9 @@ jobs:
         with:
           node-version: 22
 
-      - name: Verify Neon API
-        run: npx --yes neonctl@latest me
+      - name: Verify Neon project access
+        run: |
+          npx --yes neonctl@latest projects get "$PROJECT_ID" --output json
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          PROJECT_ID: dawn-sun-28420940
