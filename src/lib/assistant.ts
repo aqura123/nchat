@@ -1,5 +1,5 @@
 import { mastra } from '../mastra';
-import { neonDocsToolsets } from './mcp';
+/*import { neonDocsToolsets } from './mcp';*/
 
 export function mentionsNeon(body: string): boolean {
   return /(^|\s)@Kheir\b/i.test(body);
@@ -20,9 +20,16 @@ export async function runAssistant(history: HistoryMessage[]): Promise<string> {
     transcript,
   ].join('\n');
 
+  /*
   const toolsets = await neonDocsToolsets();
   const res = await mastra.getAgent('assistant').generate(prompt, {
     toolsets,
+    maxSteps: 8,
+    abortSignal: AbortSignal.timeout(120_000),
+  });
+  */
+
+  const res = await mastra.getAgent('assistant').generate(prompt, {
     maxSteps: 8,
     abortSignal: AbortSignal.timeout(120_000),
   });
