@@ -147,7 +147,7 @@ async function handleNeonMention(): Promise<void> {
         .insert(messages)
         .values({
           userId: 'neon-assistant',
-          userName: 'Neon',
+          userName: 'Kheir',
           body: reply,
         })
         .returning();
