@@ -75,7 +75,6 @@ export function Chat({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep only the last 100 messages.
   function addMessage(msg: Message) {
     setMessages((prev) =>
       prev.some((m) => m.id === msg.id)
@@ -84,7 +83,7 @@ export function Chat({
     );
   }
 
-  // Load message history and profile pictures.
+  // Load message history and avatars.
   useEffect(() => {
     fetch("/api/messages")
       .then((r) => r.json())
@@ -101,7 +100,7 @@ export function Chat({
       .catch(() => {});
   }, []);
 
-  // Connect to Neon WebSocket.
+  // WebSocket connection.
   useEffect(() => {
     let closed = false;
     let retry = 0;
@@ -121,6 +120,8 @@ export function Chat({
         );
         return;
       }
+
+      if (closed) return;
 
       const ws = new WebSocket(
         `${WS_URL}?token=${encodeURIComponent(token)}`,
@@ -195,14 +196,14 @@ export function Chat({
     };
   }, []);
 
-  // Scroll to latest message.
+  // Auto scroll.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages, assistantTyping]);
 
-  // Upload chat image.
+  // Upload message image.
   async function onPickImage(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -231,13 +232,13 @@ export function Chat({
 
       setPendingImage(data.url);
     } catch {
-      // Keep existing behavior.
+      // Upload failed.
     } finally {
       setUploading(false);
     }
   }
 
-  // Upload profile picture.
+  // Upload avatar.
   async function onPickAvatar(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -269,7 +270,7 @@ export function Chat({
         [userId]: data.url,
       }));
     } catch {
-      // Keep existing behavior.
+      // Avatar upload failed.
     } finally {
       setUploadingAvatar(false);
     }
@@ -449,10 +450,10 @@ export function Chat({
                   </div>
                 )}
 
+                {/* RTL FIX: automatic text direction */}
                 <div
                   dir="auto"
-                  style={{ unicodeBidi: "plaintext" }}
-                  className={`rounded-2xl border px-3.5 py-2 text-start text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`rounded-2xl border px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-start [unicode-bidi:plaintext] ${
                     own
                       ? "border-neon/30 bg-neon/15 rounded-br-sm text-foreground"
                       : assistant
@@ -463,7 +464,7 @@ export function Chat({
                   {m.body && (
                     <span
                       dir="auto"
-                      style={{ unicodeBidi: "plaintext" }}
+                      className="block text-start [unicode-bidi:plaintext]"
                     >
                       {m.body}
                     </span>
@@ -473,6 +474,7 @@ export function Chat({
                     <img
                       src={m.imageUrl}
                       alt=""
+                      dir="auto"
                       className={`max-h-64 rounded-lg border border-white/10 ${
                         m.body ? "mt-2" : ""
                       }`}
@@ -545,7 +547,7 @@ export function Chat({
         </div>
       )}
 
-      {/* Input form */}
+      {/* Input */}
       <form
         onSubmit={send}
         className="relative flex items-center gap-2 border-t border-white/10 p-3"
@@ -603,7 +605,7 @@ export function Chat({
         <Input
           ref={inputRef}
           dir="auto"
-          className="rounded-full"
+          className="rounded-full text-start"
           placeholder={
             connected
               ? "Message everyone… (try @neon)"
@@ -626,7 +628,7 @@ export function Chat({
   );
 }
 
-// Avatar component.
+// Avatar component
 function Avatar({
   userId,
   name,
@@ -669,7 +671,7 @@ function Avatar({
   );
 }
 
-// Format message timestamp.
+// Time formatter
 function fmtTime(iso: string): string {
   const d = new Date(iso);
 
