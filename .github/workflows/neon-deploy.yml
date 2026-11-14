@@ -1,33 +1,49 @@
 
-name: Neon Deploy
+name: Deploy to Neon
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: neon-production-deploy
+  cancel-in-progress: false
+
 jobs:
-  neon:
-    name: Deploy Neon Backend
+  deploy:
+    name: Deploy Neon Function
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci
 
       - name: Deploy Neon configuration
-        run: |
-          npx --yes neon@latest config apply \
-            --project-id dawn-sun-28420940 \
-            --branch production
+        run: npx neon@latest config apply
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+
+      - name: Deploy chat function with OpenRouter
+        run: |
+          npx neon@latest functions deploy chat \
+            --src src/index.ts \
+            --project-id dawn-sun-28420940 \
+            --branch production \
+            --env "OPENROUTER_API_KEY=$OPENROUTER_API_KEY"
+        env:
+          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
