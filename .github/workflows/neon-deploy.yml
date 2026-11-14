@@ -32,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Deploy Neon configuration
-        run: npx neon@latest config apply
+        run: npx neon@latest config apply --project-id dawn-sun-28420940 --branch production
         env:
           NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
 
