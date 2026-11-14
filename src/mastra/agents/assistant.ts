@@ -20,7 +20,7 @@ const INSTRUCTIONS = [
 
 export const assistant = new Agent({
   id: 'assistant',
-  name: 'assistant',
+  name: 'Kheir',
   instructions: INSTRUCTIONS,
 //model: 'neon/gpt-5-mini',
   model: 'openrouter/openrouter/free',
