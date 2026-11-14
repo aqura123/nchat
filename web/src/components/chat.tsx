@@ -41,12 +41,43 @@ function normalize(raw: Record<string, unknown>): Message {
   };
 }
 
+// Isolate English words and numbers inside Persian text.
+function renderBidiText(text: string) {
+  const parts = text.split(
+    /([A-Za-z0-9]+(?:[._:/?&=%+#-][A-Za-z0-9]+)*)/g,
+  );
+
+  return parts.map((part, index) => {
+    if (/^[A-Za-z0-9]/.test(part)) {
+      return (
+        <bdi
+          key={index}
+          dir="ltr"
+          className="inline-block"
+          style={{ unicodeBidi: "isolate" }}
+        >
+          {part}
+        </bdi>
+      );
+    }
+
+    return (
+      <span key={index} dir="rtl">
+        {part}
+      </span>
+    );
+  });
+}
+
 async function getToken(): Promise<string> {
   const res = await fetch("/api/auth/token", {
     credentials: "include",
   });
+
   const data = (await res.json()) as { token?: string };
+
   if (!data.token) throw new Error("No token");
+
   return data.token;
 }
 
@@ -80,6 +111,7 @@ export function Chat({
     );
   }
 
+  // Load message history and profile pictures.
   useEffect(() => {
     fetch("/api/messages")
       .then((r) => r.json())
@@ -96,6 +128,7 @@ export function Chat({
       .catch(() => {});
   }, []);
 
+  // Connect to Neon WebSocket.
   useEffect(() => {
     let closed = false;
     let retry = 0;
@@ -195,6 +228,7 @@ export function Chat({
     });
   }, [messages, assistantTyping]);
 
+  // Upload chat image.
   async function onPickImage(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -220,6 +254,7 @@ export function Chat({
       if (!res.ok) throw new Error("upload failed");
 
       const data = (await res.json()) as { url: string };
+
       setPendingImage(data.url);
     } catch {
       // Upload failed.
@@ -228,6 +263,7 @@ export function Chat({
     }
   }
 
+  // Upload profile picture.
   async function onPickAvatar(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -265,6 +301,7 @@ export function Chat({
     }
   }
 
+  // Send message.
   function send(e: React.FormEvent) {
     e.preventDefault();
 
@@ -317,6 +354,7 @@ export function Chat({
 
   return (
     <>
+      {/* Header */}
       <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-3">
           <img
@@ -328,6 +366,7 @@ export function Chat({
           <div className="leading-tight">
             <h1 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
               Chat with Neon
+
               <span className="bg-neon inline-block size-1.5 animate-pulse rounded-full shadow-[0_0_8px_var(--neon)]" />
             </h1>
 
@@ -370,6 +409,7 @@ export function Chat({
         </div>
       </header>
 
+      {/* Messages */}
       <div className="scroll-slim flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
@@ -439,24 +479,26 @@ export function Chat({
                   </div>
                 )}
 
-                {/* Persian and mixed-language RTL fix */}
+                {/* RTL message bubble with isolated LTR words */}
                 <div
-                  dir="auto"
-                  className={`rounded-2xl border px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-start [unicode-bidi:plaintext] ${
+                  dir="rtl"
+                  className={`w-full rounded-2xl border px-3.5 py-2 text-right text-sm leading-relaxed whitespace-pre-wrap ${
                     own
                       ? "border-neon/30 bg-neon/15 rounded-br-sm text-foreground"
                       : assistant
                         ? "border-neon/25 bg-neon-dim rounded-bl-sm text-foreground"
                         : "rounded-bl-sm border-white/5 bg-secondary/70 text-foreground"
                   }`}
+                  style={{ unicodeBidi: "plaintext" }}
                 >
                   {m.body && (
-                    <span
-                      dir="auto"
-                      className="[unicode-bidi:plaintext]"
+                    <div
+                      dir="rtl"
+                      className="w-full text-right"
+                      style={{ unicodeBidi: "plaintext" }}
                     >
-                      {m.body}
-                    </span>
+                      {renderBidiText(m.body)}
+                    </div>
                   )}
 
                   {m.imageUrl && (
@@ -474,6 +516,7 @@ export function Chat({
           );
         })}
 
+        {/* Assistant typing indicator */}
         {assistantTyping && (
           <div className="flex items-end gap-2.5">
             <Avatar
@@ -510,6 +553,7 @@ export function Chat({
         <div ref={bottomRef} />
       </div>
 
+      {/* Pending image */}
       {pendingImage && (
         <div className="flex items-center gap-2 border-t border-white/10 px-4 pt-3 text-xs">
           <img
@@ -533,6 +577,7 @@ export function Chat({
         </div>
       )}
 
+      {/* Message input */}
       <form
         onSubmit={send}
         className="relative flex items-center gap-2 border-t border-white/10 p-3"
@@ -613,6 +658,7 @@ export function Chat({
   );
 }
 
+// Avatar component
 function Avatar({
   userId,
   name,
@@ -655,6 +701,7 @@ function Avatar({
   );
 }
 
+// Format message time
 function fmtTime(iso: string): string {
   const d = new Date(iso);
 
