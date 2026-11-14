@@ -18,7 +18,7 @@ export default async function AuthPage({
       <div className="flex flex-col items-center gap-3 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="https://neon.com/brand/neon-logo-dark-color.svg"
+          src="https://neon.com/brand/neon-logomark-dark-color.svg"
           alt="Neon"
           className="h-8"
         />
