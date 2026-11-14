@@ -41,34 +41,6 @@ function normalize(raw: Record<string, unknown>): Message {
   };
 }
 
-// Isolate English words and numbers inside Persian text.
-function renderBidiText(text: string) {
-  const parts = text.split(
-    /([A-Za-z0-9]+(?:[._:/?&=%+#-][A-Za-z0-9]+)*)/g,
-  );
-
-  return parts.map((part, index) => {
-    if (/^[A-Za-z0-9]/.test(part)) {
-      return (
-        <bdi
-          key={index}
-          dir="ltr"
-          className="inline-block"
-          style={{ unicodeBidi: "isolate" }}
-        >
-          {part}
-        </bdi>
-      );
-    }
-
-    return (
-      <span key={index} dir="rtl">
-        {part}
-      </span>
-    );
-  });
-}
-
 async function getToken(): Promise<string> {
   const res = await fetch("/api/auth/token", {
     credentials: "include",
@@ -111,7 +83,7 @@ export function Chat({
     );
   }
 
-  // Load message history and profile pictures.
+  // Load message history and profiles
   useEffect(() => {
     fetch("/api/messages")
       .then((r) => r.json())
@@ -128,7 +100,7 @@ export function Chat({
       .catch(() => {});
   }, []);
 
-  // Connect to Neon WebSocket.
+  // WebSocket connection
   useEffect(() => {
     let closed = false;
     let retry = 0;
@@ -148,6 +120,8 @@ export function Chat({
         );
         return;
       }
+
+      if (closed) return;
 
       const ws = new WebSocket(
         `${WS_URL}?token=${encodeURIComponent(token)}`,
@@ -222,13 +196,14 @@ export function Chat({
     };
   }, []);
 
+  // Scroll to latest message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages, assistantTyping]);
 
-  // Upload chat image.
+  // Upload message image
   async function onPickImage(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -257,13 +232,13 @@ export function Chat({
 
       setPendingImage(data.url);
     } catch {
-      // Upload failed.
+      // Upload failed
     } finally {
       setUploading(false);
     }
   }
 
-  // Upload profile picture.
+  // Upload avatar
   async function onPickAvatar(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -295,13 +270,13 @@ export function Chat({
         [userId]: data.url,
       }));
     } catch {
-      // Avatar upload failed.
+      // Avatar upload failed
     } finally {
       setUploadingAvatar(false);
     }
   }
 
-  // Send message.
+  // Send message
   function send(e: React.FormEvent) {
     e.preventDefault();
 
@@ -355,7 +330,10 @@ export function Chat({
   return (
     <>
       {/* Header */}
-      <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
+      <header
+        className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3"
+        dir="ltr"
+      >
         <div className="flex items-center gap-3">
           <img
             src="https://neon.com/brand/neon-logomark-dark-color.svg"
@@ -366,7 +344,6 @@ export function Chat({
           <div className="leading-tight">
             <h1 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
               Chat with Neon
-
               <span className="bg-neon inline-block size-1.5 animate-pulse rounded-full shadow-[0_0_8px_var(--neon)]" />
             </h1>
 
@@ -456,7 +433,10 @@ export function Chat({
                 }`}
               >
                 {!own && (
-                  <div className="flex items-center gap-1.5 px-1 text-xs">
+                  <div
+                    className="flex items-center gap-1.5 px-1 text-xs"
+                    dir="ltr"
+                  >
                     <span
                       className={
                         assistant
@@ -479,26 +459,23 @@ export function Chat({
                   </div>
                 )}
 
-                {/* RTL message bubble with isolated LTR words */}
                 <div
-                  dir="rtl"
-                  className={`w-full rounded-2xl border px-3.5 py-2 text-right text-sm leading-relaxed whitespace-pre-wrap ${
+                  dir="auto"
+                  className={`rounded-2xl border px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words text-start [unicode-bidi:plaintext] ${
                     own
                       ? "border-neon/30 bg-neon/15 rounded-br-sm text-foreground"
                       : assistant
                         ? "border-neon/25 bg-neon-dim rounded-bl-sm text-foreground"
                         : "rounded-bl-sm border-white/5 bg-secondary/70 text-foreground"
                   }`}
-                  style={{ unicodeBidi: "plaintext" }}
                 >
                   {m.body && (
-                    <div
-                      dir="rtl"
-                      className="w-full text-right"
-                      style={{ unicodeBidi: "plaintext" }}
+                    <span
+                      dir="auto"
+                      className="block text-start [unicode-bidi:plaintext]"
                     >
-                      {renderBidiText(m.body)}
-                    </div>
+                      {m.body}
+                    </span>
                   )}
 
                   {m.imageUrl && (
@@ -516,7 +493,7 @@ export function Chat({
           );
         })}
 
-        {/* Assistant typing indicator */}
+        {/* Assistant typing */}
         {assistantTyping && (
           <div className="flex items-end gap-2.5">
             <Avatar
@@ -527,7 +504,10 @@ export function Chat({
             />
 
             <div className="flex max-w-[78%] flex-col items-start gap-1">
-              <div className="flex items-center gap-1.5 px-1 text-xs">
+              <div
+                className="flex items-center gap-1.5 px-1 text-xs"
+                dir="ltr"
+              >
                 <span className="text-neon font-semibold">
                   Neon
                 </span>
@@ -581,6 +561,7 @@ export function Chat({
       <form
         onSubmit={send}
         className="relative flex items-center gap-2 border-t border-white/10 p-3"
+        dir="ltr"
       >
         {suggestions.length > 0 && (
           <div className="bg-popover/95 absolute bottom-full left-3 mb-2 w-64 overflow-hidden rounded-xl border border-white/10 shadow-xl backdrop-blur">
@@ -635,7 +616,7 @@ export function Chat({
         <Input
           ref={inputRef}
           dir="auto"
-          className="rounded-full"
+          className="rounded-full text-start"
           placeholder={
             connected
               ? "Message everyone… (try @neon)"
