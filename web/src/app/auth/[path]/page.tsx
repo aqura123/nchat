@@ -23,10 +23,10 @@ export default async function AuthPage({
           className="h-8"
         />
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Chat with Neon</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Chat with Kheir</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Realtime chat on Neon — with an{" "}
-            <span className="text-neon font-medium">@neon</span> AI assistant.
+            <span className="text-neon font-medium">@Kheir</span> AI assistant.
           </p>
         </div>
       </div>
