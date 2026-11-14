@@ -25,7 +25,7 @@ export default async function AuthPage({
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Chat with Kheir</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Realtime chat on Neon — with an{" "}
+            Realtime chat on Kheir — with an{" "}
             <span className="text-neon font-medium">@Kheir</span> AI assistant.
           </p>
         </div>
