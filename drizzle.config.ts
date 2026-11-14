@@ -1,10 +1,11 @@
 import { config as loadEnv } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
-import { parseEnv } from '@neon/env';
-import neonConfig from './neon';
 
 loadEnv({ path: '.env.local' });
-const env = parseEnv(neonConfig);
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not set');
+}
 
 export default defineConfig({
   out: './drizzle',
@@ -12,6 +13,6 @@ export default defineConfig({
   dialect: 'postgresql',
   schemaFilter: ['public'],
   dbCredentials: {
-    url: env.postgres.databaseUrl,
+    url: process.env.DATABASE_URL,
   },
 });
