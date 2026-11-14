@@ -1,34 +1,20 @@
 
-name: Neon Deploy
+import { defineConfig } from "@neon/config/v1";
 
-on:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-jobs:
-  neon:
-    name: Deploy Neon Backend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version: 22
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Deploy Neon configuration and functions
-        run: |
-          npx --yes neon@latest deploy \
-            --project-id dawn-sun-28420940 \
-            --branch production \
-            --yes
-        env:
-          NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+export default defineConfig({
+  auth: true,
+  aiGateway: true,
+  buckets: {
+    uploads: {},
+  },
+  functions: {
+    chat: {
+      name: "chat with neon",
+      source: "src/index.ts",
+      env: {
+        NEON_FUNCTION_CHAT_BASE_URL:
+          "https://br-sweet-cake-bck9vcvy-chat.compute.c-16.us-east-1.aws.neon.tech/",
+      },
+    },
+  },
+});
