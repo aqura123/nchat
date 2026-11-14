@@ -45,11 +45,8 @@ async function getToken(): Promise<string> {
   const res = await fetch("/api/auth/token", {
     credentials: "include",
   });
-
   const data = (await res.json()) as { token?: string };
-
   if (!data.token) throw new Error("No token");
-
   return data.token;
 }
 
@@ -83,7 +80,6 @@ export function Chat({
     );
   }
 
-  // Load message history and avatars.
   useEffect(() => {
     fetch("/api/messages")
       .then((r) => r.json())
@@ -100,7 +96,6 @@ export function Chat({
       .catch(() => {});
   }, []);
 
-  // WebSocket connection.
   useEffect(() => {
     let closed = false;
     let retry = 0;
@@ -120,8 +115,6 @@ export function Chat({
         );
         return;
       }
-
-      if (closed) return;
 
       const ws = new WebSocket(
         `${WS_URL}?token=${encodeURIComponent(token)}`,
@@ -196,14 +189,12 @@ export function Chat({
     };
   }, []);
 
-  // Auto scroll.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages, assistantTyping]);
 
-  // Upload message image.
   async function onPickImage(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -229,7 +220,6 @@ export function Chat({
       if (!res.ok) throw new Error("upload failed");
 
       const data = (await res.json()) as { url: string };
-
       setPendingImage(data.url);
     } catch {
       // Upload failed.
@@ -238,7 +228,6 @@ export function Chat({
     }
   }
 
-  // Upload avatar.
   async function onPickAvatar(
     e: React.ChangeEvent<HTMLInputElement>,
   ) {
@@ -276,7 +265,6 @@ export function Chat({
     }
   }
 
-  // Send message.
   function send(e: React.FormEvent) {
     e.preventDefault();
 
@@ -310,7 +298,10 @@ export function Chat({
       : [];
 
   function selectMention(name: string) {
-    setDraft((d) => d.replace(/@(\w*)$/, `@${name} `));
+    setDraft((d) =>
+      d.replace(/@(\w*)$/, `@${name} `),
+    );
+
     inputRef.current?.focus();
   }
 
@@ -326,7 +317,6 @@ export function Chat({
 
   return (
     <>
-      {/* Header */}
       <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-3">
           <img
@@ -380,7 +370,6 @@ export function Chat({
         </div>
       </header>
 
-      {/* Messages */}
       <div className="scroll-slim flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
@@ -450,7 +439,7 @@ export function Chat({
                   </div>
                 )}
 
-                {/* RTL FIX: automatic text direction */}
+                {/* Persian and mixed-language RTL fix */}
                 <div
                   dir="auto"
                   className={`rounded-2xl border px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap text-start [unicode-bidi:plaintext] ${
@@ -464,7 +453,7 @@ export function Chat({
                   {m.body && (
                     <span
                       dir="auto"
-                      className="block text-start [unicode-bidi:plaintext]"
+                      className="[unicode-bidi:plaintext]"
                     >
                       {m.body}
                     </span>
@@ -474,7 +463,6 @@ export function Chat({
                     <img
                       src={m.imageUrl}
                       alt=""
-                      dir="auto"
                       className={`max-h-64 rounded-lg border border-white/10 ${
                         m.body ? "mt-2" : ""
                       }`}
@@ -486,7 +474,6 @@ export function Chat({
           );
         })}
 
-        {/* Assistant typing */}
         {assistantTyping && (
           <div className="flex items-end gap-2.5">
             <Avatar
@@ -523,7 +510,6 @@ export function Chat({
         <div ref={bottomRef} />
       </div>
 
-      {/* Pending image */}
       {pendingImage && (
         <div className="flex items-center gap-2 border-t border-white/10 px-4 pt-3 text-xs">
           <img
@@ -547,7 +533,6 @@ export function Chat({
         </div>
       )}
 
-      {/* Input */}
       <form
         onSubmit={send}
         className="relative flex items-center gap-2 border-t border-white/10 p-3"
@@ -605,7 +590,7 @@ export function Chat({
         <Input
           ref={inputRef}
           dir="auto"
-          className="rounded-full text-start"
+          className="rounded-full"
           placeholder={
             connected
               ? "Message everyone… (try @neon)"
@@ -628,7 +613,6 @@ export function Chat({
   );
 }
 
-// Avatar component
 function Avatar({
   userId,
   name,
@@ -671,7 +655,6 @@ function Avatar({
   );
 }
 
-// Time formatter
 function fmtTime(iso: string): string {
   const d = new Date(iso);
 
