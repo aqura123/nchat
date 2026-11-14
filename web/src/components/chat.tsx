@@ -7,12 +7,30 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL!;
-// The function speaks HTTP on the same host (image uploads) and WS (chat).
 const HTTP_URL = WS_URL.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
 
 const MENTIONS = [{ name: "neon", desc: "Neon assistant" }];
 
-// The @-token currently being typed at the end of the input (null if none).
+// Automatically handle Persian, Arabic and English text.
+function renderBidiText(text: string) {
+  return text.split(/([A-Za-z][A-Za-z0-9._:/+-]*)/g).map((part, index) => {
+    if (/^[A-Za-z][A-Za-z0-9._:/+-]*$/.test(part)) {
+      return (
+        <bdi key={index} dir="ltr">
+          {part}
+        </bdi>
+      );
+    }
+
+    return (
+      <bdi key={index} dir="auto">
+        {part}
+      </bdi>
+    );
+  });
+}
+
+// The @-token currently being typed at the end of the input.
 function activeMentionQuery(text: string): string | null {
   const m = text.match(/(?:^|\s)@(\w*)$/);
   return m ? m[1].toLowerCase() : null;
@@ -44,13 +62,24 @@ function normalize(raw: Record<string, unknown>): Message {
 }
 
 async function getToken(): Promise<string> {
-  const res = await fetch("/api/auth/token", { credentials: "include" });
+  const res = await fetch("/api/auth/token", {
+    credentials: "include",
+  });
+
   const data = (await res.json()) as { token?: string };
+
   if (!data.token) throw new Error("No token");
+
   return data.token;
 }
 
-export function Chat({ userId, userName }: { userId: string; userName: string }) {
+export function Chat({
+  userId,
+  userName,
+}: {
+  userId: string;
+  userName: string;
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [avatars, setAvatars] = useState<Record<string, string>>({});
   const [assistantTyping, setAssistantTyping] = useState(false);
@@ -59,18 +88,23 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
   const [pendingImage, setPendingImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   const wsRef = useRef<WebSocket | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const avatarFileRef = useRef<HTMLInputElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  // Keep only the last 100 messages in view.
+  // Keep only the last 100 messages.
   function addMessage(msg: Message) {
-    setMessages((prev) => (prev.some((m) => m.id === msg.id) ? prev : [...prev, msg].slice(-100)));
+    setMessages((prev) =>
+      prev.some((m) => m.id === msg.id)
+        ? prev
+        : [...prev, msg].slice(-100),
+    );
   }
 
-  // Load history + profile pictures from the Next.js backend.
+  // Load message history and profile pictures.
   useEffect(() => {
     fetch("/api/messages")
       .then((r) => r.json())
@@ -78,14 +112,16 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
         setMessages((d.messages ?? []).map(normalize).slice(-100)),
       )
       .catch(() => {});
+
     fetch("/api/profiles")
       .then((r) => r.json())
-      .then((d: { profiles?: Record<string, string> }) => setAvatars(d.profiles ?? {}))
+      .then((d: { profiles?: Record<string, string> }) =>
+        setAvatars(d.profiles ?? {}),
+      )
       .catch(() => {});
   }, []);
 
-  // Connect to the Neon Function WebSocket, reconnecting with backoff. Events are
-  // typed: { type: "message", message } or { type: "delete", id } (moderation).
+  // Connect to Neon WebSocket.
   useEffect(() => {
     let closed = false;
     let retry = 0;
@@ -93,19 +129,30 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
 
     async function connect() {
       if (closed) return;
+
       let token: string;
+
       try {
         token = await getToken();
       } catch {
-        timer = setTimeout(connect, Math.min(1000 * 2 ** retry++, 15000));
+        timer = setTimeout(
+          connect,
+          Math.min(1000 * 2 ** retry++, 15000),
+        );
         return;
       }
-      const ws = new WebSocket(`${WS_URL}?token=${encodeURIComponent(token)}`);
+
+      const ws = new WebSocket(
+        `${WS_URL}?token=${encodeURIComponent(token)}`,
+      );
+
       wsRef.current = ws;
+
       ws.onopen = () => {
         retry = 0;
         setConnected(true);
       };
+
       ws.onmessage = (event) => {
         const data = JSON.parse(event.data) as {
           type: string;
@@ -115,25 +162,52 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
           avatarUrl?: string;
           active?: boolean;
         };
+
         if (data.type === "message" && data.message) {
           const msg = normalize(data.message);
-          // The real reply replaces the "replying…" bubble.
-          if (msg.userId === "neon-assistant") setAssistantTyping(false);
+
+          if (msg.userId === "neon-assistant") {
+            setAssistantTyping(false);
+          }
+
           addMessage(msg);
-        } else if (data.type === "delete" && typeof data.id === "number")
-          setMessages((prev) => prev.filter((m) => m.id !== data.id));
-        else if (data.type === "profile" && data.userId && data.avatarUrl)
-          setAvatars((prev) => ({ ...prev, [data.userId!]: data.avatarUrl! }));
-        else if (data.type === "typing") setAssistantTyping(Boolean(data.active));
+        } else if (
+          data.type === "delete" &&
+          typeof data.id === "number"
+        ) {
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== data.id),
+          );
+        } else if (
+          data.type === "profile" &&
+          data.userId &&
+          data.avatarUrl
+        ) {
+          setAvatars((prev) => ({
+            ...prev,
+            [data.userId!]: data.avatarUrl!,
+          }));
+        } else if (data.type === "typing") {
+          setAssistantTyping(Boolean(data.active));
+        }
       };
+
       ws.onclose = () => {
         setConnected(false);
-        if (!closed) timer = setTimeout(connect, Math.min(1000 * 2 ** retry++, 15000));
+
+        if (!closed) {
+          timer = setTimeout(
+            connect,
+            Math.min(1000 * 2 ** retry++, 15000),
+          );
+        }
       };
+
       ws.onerror = () => ws.close();
     }
 
     connect();
+
     return () => {
       closed = true;
       clearTimeout(timer);
@@ -141,68 +215,118 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
     };
   }, []);
 
+  // Scroll to latest message.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
   }, [messages, assistantTyping]);
 
-  async function onPickImage(e: React.ChangeEvent<HTMLInputElement>) {
+  // Upload chat image.
+  async function onPickImage(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
     const file = e.target.files?.[0];
     e.target.value = "";
+
     if (!file) return;
+
     setUploading(true);
+
     try {
       const token = await getToken();
+
       const res = await fetch(`${HTTP_URL}/upload`, {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": file.type },
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": file.type,
+        },
         body: file,
       });
+
       if (!res.ok) throw new Error("upload failed");
+
       const data = (await res.json()) as { url: string };
+
       setPendingImage(data.url);
     } catch {
-      // ignore; keep it simple
+      // Keep the existing behavior.
     } finally {
       setUploading(false);
     }
   }
 
-  // Upload a profile picture; the function broadcasts a `profile` event so every
-  // client (including this one) updates the avatar next to this user's messages.
-  async function onPickAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+  // Upload profile picture.
+  async function onPickAvatar(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
     const file = e.target.files?.[0];
     e.target.value = "";
+
     if (!file) return;
+
     setUploadingAvatar(true);
+
     try {
       const token = await getToken();
+
       const res = await fetch(`${HTTP_URL}/avatar`, {
         method: "POST",
-        headers: { authorization: `Bearer ${token}`, "content-type": file.type },
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": file.type,
+        },
         body: file,
       });
+
       if (!res.ok) throw new Error("avatar upload failed");
+
       const data = (await res.json()) as { url: string };
-      setAvatars((prev) => ({ ...prev, [userId]: data.url }));
+
+      setAvatars((prev) => ({
+        ...prev,
+        [userId]: data.url,
+      }));
     } catch {
-      // ignore; keep it simple
+      // Keep the existing behavior.
     } finally {
       setUploadingAvatar(false);
     }
   }
 
+  // Send message.
   function send(e: React.FormEvent) {
     e.preventDefault();
+
     const body = draft.trim();
-    if ((!body && !pendingImage) || wsRef.current?.readyState !== WebSocket.OPEN) return;
-    wsRef.current.send(JSON.stringify({ body, imageUrl: pendingImage }));
+
+    if (
+      (!body && !pendingImage) ||
+      wsRef.current?.readyState !== WebSocket.OPEN
+    ) {
+      return;
+    }
+
+    wsRef.current.send(
+      JSON.stringify({
+        body,
+        imageUrl: pendingImage,
+      }),
+    );
+
     setDraft("");
     setPendingImage(null);
   }
 
   const mentionQuery = activeMentionQuery(draft);
+
   const suggestions =
-    mentionQuery !== null ? MENTIONS.filter((m) => m.name.startsWith(mentionQuery)) : [];
+    mentionQuery !== null
+      ? MENTIONS.filter((m) =>
+          m.name.startsWith(mentionQuery),
+        )
+      : [];
 
   function selectMention(name: string) {
     setDraft((d) => d.replace(/@(\w*)$/, `@${name} `));
@@ -210,7 +334,10 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
-    if (suggestions.length > 0 && (e.key === "Enter" || e.key === "Tab")) {
+    if (
+      suggestions.length > 0 &&
+      (e.key === "Enter" || e.key === "Tab")
+    ) {
       e.preventDefault();
       selectMention(suggestions[0].name);
     }
@@ -218,22 +345,27 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
 
   return (
     <>
+      {/* Header */}
       <header className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="https://neon.com/brand/neon-logomark-dark-color.svg"
             alt="Neon"
             className="h-7 w-7"
           />
+
           <div className="leading-tight">
             <h1 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
               Chat with Neon
               <span className="bg-neon inline-block size-1.5 animate-pulse rounded-full shadow-[0_0_8px_var(--neon)]" />
             </h1>
-            <p className="text-muted-foreground text-xs">Signed in as {userName}</p>
+
+            <p className="text-muted-foreground text-xs">
+              Signed in as {userName}
+            </p>
           </div>
         </div>
+
         <div className="flex items-center gap-2">
           <input
             ref={avatarFileRef}
@@ -242,6 +374,7 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
             className="hidden"
             onChange={onPickAvatar}
           />
+
           <button
             type="button"
             onClick={() => avatarFileRef.current?.click()}
@@ -250,57 +383,96 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
             title="Change your profile picture"
             className="group relative rounded-full disabled:opacity-60"
           >
-            <Avatar userId={userId} name={userName} assistant={false} avatars={avatars} />
+            <Avatar
+              userId={userId}
+              name={userName}
+              assistant={false}
+              avatars={avatars}
+            />
+
             <span className="bg-neon text-primary-foreground absolute -right-0.5 -bottom-0.5 grid size-3.5 place-items-center rounded-full ring-2 ring-card">
               <Camera className="size-2" />
             </span>
           </button>
+
           <UserButton size="icon" />
         </div>
       </header>
 
+      {/* Messages */}
       <div className="scroll-slim flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="https://neon.com/brand/neon-logomark-dark-color.svg"
               alt=""
               className="size-10 opacity-80"
             />
+
             <p className="text-muted-foreground text-sm">
               No messages yet. Say hi — or tag{" "}
-              <span className="text-neon font-medium">@neon</span> for help.
+              <span className="text-neon font-medium">
+                @neon
+              </span>{" "}
+              for help.
             </p>
           </div>
         )}
+
         {messages.map((m) => {
           const own = m.userId === userId;
-          const assistant = m.userId === "neon-assistant" || m.userName === "Neon";
+
+          const assistant =
+            m.userId === "neon-assistant" ||
+            m.userName === "Neon";
+
           return (
             <div
               key={m.id}
-              className={`flex items-end gap-2.5 ${own ? "flex-row-reverse" : ""}`}
+              className={`flex items-end gap-2.5 ${
+                own ? "flex-row-reverse" : ""
+              }`}
             >
-              <Avatar userId={m.userId} name={m.userName} assistant={assistant} avatars={avatars} />
-              <div className={`flex max-w-[78%] flex-col gap-1 ${own ? "items-end" : "items-start"}`}>
+              <Avatar
+                userId={m.userId}
+                name={m.userName}
+                assistant={assistant}
+                avatars={avatars}
+              />
+
+              <div
+                className={`flex max-w-[78%] flex-col gap-1 ${
+                  own ? "items-end" : "items-start"
+                }`}
+              >
                 {!own && (
                   <div className="flex items-center gap-1.5 px-1 text-xs">
-                    <span className={assistant ? "text-neon font-semibold" : "text-foreground/90 font-medium"}>
+                    <span
+                      className={
+                        assistant
+                          ? "text-neon font-semibold"
+                          : "text-foreground/90 font-medium"
+                      }
+                    >
                       {m.userName}
                     </span>
+
                     {assistant && (
                       <span className="bg-neon/15 text-neon rounded px-1 py-px text-[10px] font-medium tracking-wide uppercase">
                         AI
                       </span>
                     )}
-                    <span className="text-muted-foreground/70">{fmtTime(m.createdAt)}</span>
+
+                    <span className="text-muted-foreground/70">
+                      {fmtTime(m.createdAt)}
+                    </span>
                   </div>
                 )}
+
                 <div
                   dir="auto"
                   style={{ unicodeBidi: "plaintext" }}
-                  className={`rounded-2xl border px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
+                  className={`rounded-2xl border px-3.5 py-2 text-start text-sm leading-relaxed whitespace-pre-wrap ${
                     own
                       ? "border-neon/30 bg-neon/15 rounded-br-sm text-foreground"
                       : assistant
@@ -308,13 +480,19 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
                         : "rounded-bl-sm border-white/5 bg-secondary/70 text-foreground"
                   }`}
                 >
-                  {m.body && <span>{m.body}</span>}
+                  {m.body && (
+                    <span dir="auto">
+                      {renderBidiText(m.body)}
+                    </span>
+                  )}
+
                   {m.imageUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={m.imageUrl}
                       alt=""
-                      className={`max-h-64 rounded-lg border border-white/10 ${m.body ? "mt-2" : ""}`}
+                      className={`max-h-64 rounded-lg border border-white/10 ${
+                        m.body ? "mt-2" : ""
+                      }`}
                     />
                   )}
                 </div>
@@ -322,17 +500,32 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
             </div>
           );
         })}
+
+        {/* Assistant typing */}
         {assistantTyping && (
           <div className="flex items-end gap-2.5">
-            <Avatar userId="neon-assistant" name="Neon" assistant avatars={avatars} />
+            <Avatar
+              userId="neon-assistant"
+              name="Neon"
+              assistant
+              avatars={avatars}
+            />
+
             <div className="flex max-w-[78%] flex-col items-start gap-1">
               <div className="flex items-center gap-1.5 px-1 text-xs">
-                <span className="text-neon font-semibold">Neon</span>
+                <span className="text-neon font-semibold">
+                  Neon
+                </span>
+
                 <span className="bg-neon/15 text-neon rounded px-1 py-px text-[10px] font-medium tracking-wide uppercase">
                   AI
                 </span>
-                <span className="text-muted-foreground/70">replying…</span>
+
+                <span className="text-muted-foreground/70">
+                  replying…
+                </span>
               </div>
+
               <div className="border-neon/25 bg-neon-dim flex items-center gap-1 rounded-2xl rounded-bl-sm border px-4 py-3">
                 <span className="bg-neon/70 size-1.5 animate-bounce rounded-full [animation-delay:-200ms]" />
                 <span className="bg-neon/70 size-1.5 animate-bounce rounded-full [animation-delay:-100ms]" />
@@ -341,14 +534,23 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
             </div>
           </div>
         )}
+
         <div ref={bottomRef} />
       </div>
 
+      {/* Pending image */}
       {pendingImage && (
         <div className="flex items-center gap-2 border-t border-white/10 px-4 pt-3 text-xs">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={pendingImage} alt="" className="h-10 w-10 rounded-md object-cover ring-1 ring-white/10" />
-          <span className="text-muted-foreground">Image attached</span>
+          <img
+            src={pendingImage}
+            alt=""
+            className="h-10 w-10 rounded-md object-cover ring-1 ring-white/10"
+          />
+
+          <span className="text-muted-foreground">
+            Image attached
+          </span>
+
           <button
             type="button"
             onClick={() => setPendingImage(null)}
@@ -360,7 +562,11 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
         </div>
       )}
 
-      <form onSubmit={send} className="relative flex items-center gap-2 border-t border-white/10 p-3">
+      {/* Input form */}
+      <form
+        onSubmit={send}
+        className="relative flex items-center gap-2 border-t border-white/10 p-3"
+      >
         {suggestions.length > 0 && (
           <div className="bg-popover/95 absolute bottom-full left-3 mb-2 w-64 overflow-hidden rounded-xl border border-white/10 shadow-xl backdrop-blur">
             {suggestions.map((s) => (
@@ -373,18 +579,24 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
                 }}
                 className="hover:bg-neon/10 flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="https://neon.com/brand/neon-logomark-dark-color.svg"
                   alt=""
                   className="size-5"
                 />
-                <span className="text-neon font-medium">@{s.name}</span>
-                <span className="text-muted-foreground text-xs">{s.desc}</span>
+
+                <span className="text-neon font-medium">
+                  @{s.name}
+                </span>
+
+                <span className="text-muted-foreground text-xs">
+                  {s.desc}
+                </span>
               </button>
             ))}
           </div>
         )}
+
         <input
           ref={fileRef}
           type="file"
@@ -392,6 +604,7 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
           className="hidden"
           onChange={onPickImage}
         />
+
         <Button
           type="button"
           variant="outline"
@@ -403,16 +616,26 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
         >
           <ImagePlus className="size-4" />
         </Button>
+
         <Input
           ref={inputRef}
           dir="auto"
           className="rounded-full"
-          placeholder={connected ? "Message everyone… (try @neon)" : "Connecting…"}
+          placeholder={
+            connected
+              ? "Message everyone… (try @neon)"
+              : "Connecting…"
+          }
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onKeyDown}
         />
-        <Button type="submit" className="rounded-full px-5 font-semibold" disabled={!connected}>
+
+        <Button
+          type="submit"
+          className="rounded-full px-5 font-semibold"
+          disabled={!connected}
+        >
           Send
         </Button>
       </form>
@@ -420,6 +643,7 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
   );
 }
 
+// Avatar component.
 function Avatar({
   userId,
   name,
@@ -433,7 +657,6 @@ function Avatar({
 }) {
   if (assistant) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src="https://neon.com/brand/neon-logomark-dark-color.svg"
         alt="Neon"
@@ -441,10 +664,11 @@ function Avatar({
       />
     );
   }
+
   const url = avatars[userId];
+
   if (url) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={url}
         alt={name}
@@ -452,7 +676,9 @@ function Avatar({
       />
     );
   }
+
   const initial = name.trim().charAt(0).toUpperCase() || "?";
+
   return (
     <div className="bg-secondary text-foreground grid size-8 shrink-0 place-items-center rounded-full text-xs font-semibold ring-1 ring-white/10">
       {initial}
@@ -460,8 +686,14 @@ function Avatar({
   );
 }
 
+// Format message timestamp.
 function fmtTime(iso: string): string {
   const d = new Date(iso);
+
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+  return d.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
