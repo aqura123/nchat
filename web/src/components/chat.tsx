@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 const WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL!;
 const HTTP_URL = WS_URL.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
 
-const MENTIONS = [{ name: "neon", desc: "Kheir assistant" }];
+const MENTIONS = [{ name: "Kheir", desc: "Kheir assistant" }];
 
 function activeMentionQuery(text: string): string | null {
   const m = text.match(/(?:^|\s)@(\w*)$/);
