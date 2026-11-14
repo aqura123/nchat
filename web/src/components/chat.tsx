@@ -11,26 +11,6 @@ const HTTP_URL = WS_URL.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
 
 const MENTIONS = [{ name: "neon", desc: "Neon assistant" }];
 
-// Automatically handle Persian, Arabic and English text.
-function renderBidiText(text: string) {
-  return text.split(/([A-Za-z][A-Za-z0-9._:/+-]*)/g).map((part, index) => {
-    if (/^[A-Za-z][A-Za-z0-9._:/+-]*$/.test(part)) {
-      return (
-        <bdi key={index} dir="ltr">
-          {part}
-        </bdi>
-      );
-    }
-
-    return (
-      <bdi key={index} dir="auto">
-        {part}
-      </bdi>
-    );
-  });
-}
-
-// The @-token currently being typed at the end of the input.
 function activeMentionQuery(text: string): string | null {
   const m = text.match(/(?:^|\s)@(\w*)$/);
   return m ? m[1].toLowerCase() : null;
@@ -251,7 +231,7 @@ export function Chat({
 
       setPendingImage(data.url);
     } catch {
-      // Keep the existing behavior.
+      // Keep existing behavior.
     } finally {
       setUploading(false);
     }
@@ -289,7 +269,7 @@ export function Chat({
         [userId]: data.url,
       }));
     } catch {
-      // Keep the existing behavior.
+      // Keep existing behavior.
     } finally {
       setUploadingAvatar(false);
     }
@@ -481,8 +461,11 @@ export function Chat({
                   }`}
                 >
                   {m.body && (
-                    <span dir="auto">
-                      {renderBidiText(m.body)}
+                    <span
+                      dir="auto"
+                      style={{ unicodeBidi: "plaintext" }}
+                    >
+                      {m.body}
                     </span>
                   )}
 
