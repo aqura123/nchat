@@ -99,3 +99,15 @@
   background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
+
+
+
+/* Hide forgot password link */
+a[href="/auth/forgot-password"] {
+  display: none !important;
+}
+
+/* Hide the entire Sign Up footer */
+.neon-auth-ui [data-slot="card-footer"]:has(a[href="/auth/sign-up"]) {
+  display: none !important;
+}
