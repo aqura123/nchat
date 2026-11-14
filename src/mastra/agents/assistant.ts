@@ -27,6 +27,7 @@ export const assistant = new Agent({
   id: 'assistant',
   name: 'assistant',
   instructions: INSTRUCTIONS,
-  model: 'neon/gpt-5-mini',
+//model: 'neon/gpt-5-mini',
+  model: 'openrouter/free',
   tools: { load_skill: loadSkillTool },
 });
