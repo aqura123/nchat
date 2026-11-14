@@ -12,10 +12,12 @@ const INSTRUCTIONS = [
   'Use Neon documentation tools and load relevant skills when needed.',
   'Keep replies short and engaging unless someone asks for details.',
   'Your goal: make people smile while giving genuinely useful answers!',
+  /*
   '',
   '<neon-overview-skill>',
   ALWAYS_LOADED_SKILL_BODY,
   '</neon-overview-skill>',
+  */
 ].join('\n');
 
 export const assistant = new Agent({
