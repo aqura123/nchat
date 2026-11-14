@@ -298,6 +298,8 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
                   </div>
                 )}
                 <div
+                  dir="auto"
+                  style={{ unicodeBidi: "plaintext" }}
                   className={`rounded-2xl border px-3.5 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
                     own
                       ? "border-neon/30 bg-neon/15 rounded-br-sm text-foreground"
@@ -403,6 +405,7 @@ export function Chat({ userId, userName }: { userId: string; userName: string })
         </Button>
         <Input
           ref={inputRef}
+          dir="auto"
           className="rounded-full"
           placeholder={connected ? "Message everyone… (try @neon)" : "Connecting…"}
           value={draft}
