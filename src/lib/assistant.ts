@@ -2,7 +2,7 @@ import { mastra } from '../mastra';
 import { neonDocsToolsets } from './mcp';
 
 export function mentionsNeon(body: string): boolean {
-  return /(^|\s)@neon\b/i.test(body);
+  return /(^|\s)@Kheir\b/i.test(body);
 }
 
 export type HistoryMessage = { userName: string; body: string; imageUrl: string | null };
