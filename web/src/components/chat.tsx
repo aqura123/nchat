@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 const WS_URL = process.env.NEXT_PUBLIC_CHAT_WS_URL!;
 const HTTP_URL = WS_URL.replace(/^wss:/, "https:").replace(/^ws:/, "http:");
 
-const MENTIONS = [{ name: "neon", desc: "Neon assistant" }];
+const MENTIONS = [{ name: "neon", desc: "Kheir assistant" }];
 
 function activeMentionQuery(text: string): string | null {
   const m = text.match(/(?:^|\s)@(\w*)$/);
@@ -343,7 +343,7 @@ export function Chat({
 
           <div className="leading-tight">
             <h1 className="flex items-center gap-2 text-sm font-semibold tracking-tight">
-              Chat with Neon
+              Chat with Kheir
               <span className="bg-neon inline-block size-1.5 animate-pulse rounded-full shadow-[0_0_8px_var(--neon)]" />
             </h1>
 
@@ -399,7 +399,7 @@ export function Chat({
             <p className="text-muted-foreground text-sm">
               No messages yet. Say hi — or tag{" "}
               <span className="text-neon font-medium">
-                @neon
+                @Kheir
               </span>{" "}
               for help.
             </p>
@@ -411,7 +411,7 @@ export function Chat({
 
           const assistant =
             m.userId === "neon-assistant" ||
-            m.userName === "Neon";
+            m.userName === "Kheir";
 
           return (
             <div
@@ -498,7 +498,7 @@ export function Chat({
           <div className="flex items-end gap-2.5">
             <Avatar
               userId="neon-assistant"
-              name="Neon"
+              name="Kheir"
               assistant
               avatars={avatars}
             />
@@ -509,7 +509,7 @@ export function Chat({
                 dir="ltr"
               >
                 <span className="text-neon font-semibold">
-                  Neon
+                  Kheir
                 </span>
 
                 <span className="bg-neon/15 text-neon rounded px-1 py-px text-[10px] font-medium tracking-wide uppercase">
@@ -619,7 +619,7 @@ export function Chat({
           className="rounded-full text-start"
           placeholder={
             connected
-              ? "Message everyone… (try @neon)"
+              ? "Message everyone… (try @Kheir)"
               : "Connecting…"
           }
           value={draft}
