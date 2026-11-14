@@ -138,7 +138,7 @@ async function handleNeonMention(): Promise<void> {
       })
       .from(messages)
       .orderBy(desc(messages.createdAt))
-      .limit(20);
+      .limit(3);
 
     const reply = await runAssistant(recent.reverse());
 
