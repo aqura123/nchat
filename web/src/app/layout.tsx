@@ -3,7 +3,7 @@ import "./globals.css";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Chat with Neon",
+  title: "Chat with Kheir",
   description:
     "A shared realtime chat on Neon Functions (WebSockets) + Neon Auth, with an @neon AI assistant.",
 };
