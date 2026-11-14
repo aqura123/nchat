@@ -14,8 +14,8 @@ export async function runAssistant(history: HistoryMessage[]): Promise<string> {
     .map((m) => `${m.userName}: ${m.body}${m.imageUrl ? ` [image: ${m.imageUrl}]` : ''}`)
     .join('\n');
   const prompt = [
-    'You were mentioned with @neon in this group chat. Here are the most recent messages',
-    '(oldest first). Reply to the latest @neon mention.',
+    'You were mentioned with @Kheir in this group chat. Here are the most recent messages',
+    '(oldest first). Reply to the latest @Kheir mention.',
     '',
     transcript,
   ].join('\n');
