@@ -179,7 +179,7 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const app = new Hono();
 
 app.get('/', (c) =>
-  c.text('Chat with Neon — connect over WebSocket with ?token=<jwt>')
+  c.text('Chat with Kheir — connect over WebSocket with ?token=<jwt>')
 );
 
 app.use(
