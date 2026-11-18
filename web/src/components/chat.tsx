@@ -197,12 +197,16 @@ export function Chat({
   }, []);
 
   // Scroll to latest message
+  // Scroll only the messages container
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({
+    const container = bottomRef.current?.parentElement;
+    if (!container) return;
+    container.scrollTo({
+      top: container.scrollHeight,
       behavior: "smooth",
     });
   }, [messages, assistantTyping]);
-
+  
   // Upload message image
   async function onPickImage(
     e: React.ChangeEvent<HTMLInputElement>,
