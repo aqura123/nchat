@@ -102,12 +102,17 @@
 
 
 
-/* Hide forgot password link */
-a[href="/auth/forgot-password"] {
+/* Hide Forgot Password link */
+a[href*="/auth/forgot-password"] {
   display: none !important;
 }
 
-/* Hide the entire Sign Up footer */
-.neon-auth-ui [data-slot="card-footer"]:has(a[href="/auth/sign-up"]) {
+/* Hide Sign Up link */
+a[href*="/auth/sign-up"] {
+  display: none !important;
+}
+
+/* Hide Sign Up footer */
+[data-slot="card-footer"]:has(a[href*="/auth/sign-up"]) {
   display: none !important;
 }
