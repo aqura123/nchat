@@ -197,12 +197,8 @@ export function Chat({
   }, []);
 
   // Scroll to latest message
-  // Scroll only the messages container
   useEffect(() => {
-    const container = bottomRef.current?.parentElement;
-    if (!container) return;
-    container.scrollTo({
-      top: container.scrollHeight,
+    bottomRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages, assistantTyping]);
