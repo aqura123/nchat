@@ -17,6 +17,8 @@ export const messages = pgTable(
 // user's messages (looked up client-side by user id).
 export const profiles = pgTable('profiles', {
   userId: text('user_id').primaryKey(),
-  avatarUrl: text('avatar_url').notNull(),
+  name: text('name'),
+  email: text('email'),
+  avatarUrl: text('avatar_url'),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
