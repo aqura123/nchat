@@ -15,8 +15,10 @@ export const messages = pgTable(
   (table) => [index("messages_created_at_idx").on(table.createdAt)],
 );
 
-export const profiles = pgTable("profiles", {
-  userId: text("user_id").primaryKey(),
-  avatarUrl: text("avatar_url").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const profiles = pgTable('profiles', {
+  userId: text('user_id').primaryKey(),
+  name: text('name'),
+  email: text('email'),
+  avatarUrl: text('avatar_url'),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
